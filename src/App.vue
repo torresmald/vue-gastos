@@ -1,24 +1,80 @@
 <script setup>
-import { ref } from "vue";
+import { ref, reactive } from "vue";
 import Presupuesto from "./components/Presupuesto.vue";
 import ControlPresupuesto from "./components/ControlPresupuesto.vue";
+import Modal from "./components/Modal.vue";
+import Gasto from './components/Gasto.vue';
 
+import iconoGasto from "../src/assets/img/nuevo-gasto.svg";
+
+const modal = reactive({
+  mostrar: false,
+  animar: false,
+});
+const gasto = reactive({
+  nombre: "",
+  cantidad: "",
+  categoria: "",
+  id: null,
+  fecha: Date.now(),
+});
+const gastos = ref([]);
 const presupuesto = ref(0);
-const definirPresupuesto = cantidad =>{
+const disponible = ref(0);
+const definirPresupuesto = (cantidad) => {
   presupuesto.value = cantidad;
-}
+  disponible.value = cantidad;
+};
+const mostrarModal = () => {
+  modal.mostrar = true;
+  setTimeout(() => {
+    modal.animar = true;
+  }, 500);
+};
+const ocultarModal = () => {
+  modal.animar = false;
+  setTimeout(() => {
+    modal.mostrar = false;
+  }, 500);
+};
 </script>
 
 <template>
   <div>
     <header>
-      <h1>Desde VUE</h1>
+      <h1>Control Gastos</h1>
       <div class="contenedor contenedor-header sombra">
-        <Presupuesto @definir-presupuesto="definirPresupuesto" v-if="presupuesto === 0"/>
+        <Presupuesto
+          @definir-presupuesto="definirPresupuesto"
+          v-if="presupuesto === 0"
+        />
 
-        <ControlPresupuesto />
+        <ControlPresupuesto
+          v-else
+          :presupuesto="presupuesto"
+          :disponible="disponible"
+        />
       </div>
     </header>
+    <main v-if="presupuesto > 0">
+      <div class="listado-gastos">
+        <h2>{{ gastos.length ? "Gastos" : "No hay Gastos" }}</h2>
+        <Gasto :gasto="gasto" v-for="gasto in gastos"/>
+      </div>
+      <div class="crear-gasto">
+        <img :src="iconoGasto" alt="icono Gasto" @click="mostrarModal" />
+      </div>
+      <Modal
+        v-if="modal.mostrar"
+        @ocultar-modal="ocultarModal"
+        :modal="modal"
+        :gasto="gasto"
+        :gastos="gastos"
+        v-model:nombre="gasto.nombre"
+        v-model:cantidad="gasto.cantidad"
+        v-model:categoria="gasto.categoria"
+      />
+    </main>
   </div>
 </template>
 
@@ -60,20 +116,38 @@ header h1 {
   color: var(--blanco);
   text-align: center;
 }
-.contenedor{
+.contenedor {
   width: 90%;
   max-width: 80rem;
   margin: 0 auto;
 }
-.contenedor-header{
+.contenedor-header {
   margin-top: -5rem;
   transform: translateY(5rem);
   padding: 5rem;
 }
-.sombra{
+.sombra {
   box-shadow: 0px 10px 15px -3px rgba(0, 0, 0, 0.1);
   background-color: var(--blanco);
   border-radius: 1.2rem;
   padding: 5rem;
+}
+.crear-gasto {
+  position: fixed;
+  bottom: 5rem;
+  right: 5rem;
+}
+.crear-gasto img {
+  width: 5rem;
+  cursor: pointer;
+}
+.listado-gastos {
+  margin-top: 10rem;
+}
+.listado-gastos h2 {
+  text-transform: uppercase;
+  text-align: center;
+  font-weight: 900;
+  color: var(--gris-oscuro);
 }
 </style>
