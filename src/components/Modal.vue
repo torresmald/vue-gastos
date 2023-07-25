@@ -29,7 +29,7 @@ const props = defineProps({
   }
 });
 const error = ref("");
-const categorias = ["varios", "casa", "suscripciones", "medico", "comida"];
+const categorias = ["gastos", "casa", "suscripciones", "salud", "comida", "ahorro", "ocio"];
 
 const agregarGasto = () => {
   if (Object.values(props.gasto).includes("")) {

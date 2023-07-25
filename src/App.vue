@@ -1,9 +1,9 @@
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, watch } from "vue";
 import Presupuesto from "./components/Presupuesto.vue";
 import ControlPresupuesto from "./components/ControlPresupuesto.vue";
 import Modal from "./components/Modal.vue";
-import Gasto from './components/Gasto.vue';
+import Gasto from "./components/Gasto.vue";
 
 import iconoGasto from "../src/assets/img/nuevo-gasto.svg";
 
@@ -19,8 +19,22 @@ const gasto = reactive({
   fecha: Date.now(),
 });
 const gastos = ref([]);
+watch(
+  gastos,
+  () => {
+    const total = gastos.value.reduce((acc, total) => acc + total.cantidad, 0);
+    gastado.value = total;
+    disponible.value = presupuesto.value - gastado.value;
+  },
+  {
+    deep: true,
+  }
+);
+
 const presupuesto = ref(0);
 const disponible = ref(0);
+const gastado = ref(0);
+
 const definirPresupuesto = (cantidad) => {
   presupuesto.value = cantidad;
   disponible.value = cantidad;
@@ -36,11 +50,24 @@ const ocultarModal = () => {
   setTimeout(() => {
     modal.mostrar = false;
   }, 500);
+  gasto.nombre = "";
+  gasto.cantidad = "";
+  gasto.fecha = "";
+  gasto.categoria = "";
+  gasto.id = null;
+};
+const editarGasto = (id) => {
+  mostrarModal();
+  const gastoSeleccionado = gastos.value.filter(
+    (gastoState) => gastoState.id === id
+  )[0];
+  Object.assign(gasto, gastoSeleccionado);
+  console.log(gasto);
 };
 </script>
 
 <template>
-  <div>
+  <div :class="{ fijar: modal.mostrar }">
     <header>
       <h1>Control Gastos</h1>
       <div class="contenedor contenedor-header sombra">
@@ -53,13 +80,18 @@ const ocultarModal = () => {
           v-else
           :presupuesto="presupuesto"
           :disponible="disponible"
+          :gastado="gastado"
         />
       </div>
     </header>
     <main v-if="presupuesto > 0">
       <div class="listado-gastos">
         <h2>{{ gastos.length ? "Gastos" : "No hay Gastos" }}</h2>
-        <Gasto :gasto="gasto" v-for="gasto in gastos"/>
+        <Gasto
+          :gasto="gasto"
+          v-for="gasto in gastos"
+          @editar-gasto="editarGasto"
+        />
       </div>
       <div class="crear-gasto">
         <img :src="iconoGasto" alt="icono Gasto" @click="mostrarModal" />
@@ -149,5 +181,9 @@ header h1 {
   text-align: center;
   font-weight: 900;
   color: var(--gris-oscuro);
+}
+.fijar {
+  overflow: hidden;
+  height: 100vh;
 }
 </style>
