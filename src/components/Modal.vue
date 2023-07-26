@@ -1,12 +1,13 @@
 <script setup>
 import { ref } from "vue";
-import {uid} from 'uid';
+import { uid } from "uid";
 
 import Alerta from "./Alerta.vue";
 import cerrarModal from "../assets/img/cerrar.svg";
 
 defineEmits([
   "ocultar-modal",
+  "eliminar-gasto",
   "update:nombre",
   "update:cantidad",
   "update:categoria",
@@ -25,11 +26,27 @@ const props = defineProps({
   },
   gastos: {
     type: Array,
-    required: true
-  }
+    required: true,
+  },
+  presupuesto: {
+    type: Number,
+    required: true,
+  },
+  disponible: {
+    type: Number,
+    required: true,
+  },
 });
 const error = ref("");
-const categorias = ["gastos", "casa", "suscripciones", "salud", "comida", "ahorro", "ocio"];
+const categorias = [
+  "gastos",
+  "casa",
+  "suscripciones",
+  "salud",
+  "comida",
+  "ahorro",
+  "ocio",
+];
 
 const agregarGasto = () => {
   if (Object.values(props.gasto).includes("")) {
@@ -46,16 +63,25 @@ const agregarGasto = () => {
     }, 2000);
     return;
   }
-  props.gasto.id = uid();
-  props.gastos.push({...props.gasto});
- 
+  if (props.gasto.id) {
+    const { id } = props.gasto;
+    const i = props.gastos.findIndex((gasto) => gasto.id === id);
+    props.gastos[i] = { ...props.gasto };
+  } else {
+    props.gasto.id = uid();
+    props.gastos.push({ ...props.gasto });
+  }
+
   setTimeout(() => {
-    props.gasto.nombre = ''
+    props.gasto.nombre = "";
+    props.gasto.id = null;
+    props.gasto.fecha = Date.now();
     props.gasto.cantidad = 0;
-    props.gasto.categoria= ''
+    props.gasto.categoria = "";
     props.modal.mostrar = false;
-  }, 2000);
+  }, 500);
 };
+
 </script>
 <template>
   <div class="modal">
@@ -72,7 +98,9 @@ const agregarGasto = () => {
       :class="['props.modal.animar' ? 'animar' : 'cerrar']"
     >
       <form @submit.prevent="agregarGasto" class="nuevo-gasto">
-        <legend>Añadir Gasto</legend>
+        <legend>
+          {{ gasto.id != null ? "Editar Gasto" : "Añadir Gasto" }}
+        </legend>
         <Alerta v-if="error">
           {{ error }}
         </Alerta>
@@ -109,8 +137,12 @@ const agregarGasto = () => {
             </option>
           </select>
         </div>
-        <input type="submit" value="Añadir Gasto" />
+        <input
+          type="submit"
+          :value="gasto.id !== null ? 'Editar Gasto' : 'Añadir Gasto'"
+        />
       </form>
+      <button v-if="gasto.id !== null" class="btn-eliminar" type="button" @click="$emit('eliminar-gasto', gasto.id)">Eliminar Gasto</button>
     </div>
   </div>
 </template>
@@ -177,5 +209,16 @@ const agregarGasto = () => {
   color: var(--blanco);
   font-weight: 700;
   cursor: pointer;
+}
+.btn-eliminar{
+  padding: 1rem;
+  width: 100%;
+  background-color: #ef4444;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--blanco);
+  cursor: pointer;
+  margin-top: 10rem;
+  border: none;
 }
 </style>
